@@ -10,8 +10,17 @@ layout: post
 ### bloodhound ldap
 ![bloodhound](../images/2025-02-18-[HTB]-EscapeTwo/image-11.png)
 
-> btw, if you want to install bloodhound ce\bloodhound-python, [here](https://www.centralinfosec.com/blog/bloodhound-kali-install) or [here](https://github.com/dirkjanm/BloodHound.py) is good guide for kali: 
+> btw, if you want to install bloodhound ce\bloodhound-python, [here](https://www.centralinfosec.com/blog/bloodhound-kali-install) or [here](https://github.com/dirkjanm/BloodHound.py) is good guide for kali. ALso if you are like me and couldnt reset password do these (tho it didnt help me and i just downloaded to windows):
 
+`docker rm desktop_app-db_1` 
+`docker rm desktop_bloodhound_1`
+`docker rm desktop_graph-db_1`
+`docker rmi neo4j:4.4`
+`docker rmi postgres:16`
+`docker rmi specterops/bloodhound`
+`docker system prune --volumes --force` 
+
+where, desktop is ur parent folder for docker-compose file.
 
 ### crackmapexec enum:
 
