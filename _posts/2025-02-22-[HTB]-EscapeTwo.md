@@ -98,7 +98,8 @@ there is a esc4 to esc1
 >![alt text](../images/2025-02-22-[HTB]-EscapeTwo/image-3.png)
 
 
->then hash
+> then hash
+> 
 >![alt text](../images/2025-02-22-[HTB]-EscapeTwo/image-4.png)
 
 Now just connect and get your root.txt
