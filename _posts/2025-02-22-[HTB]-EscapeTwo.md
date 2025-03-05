@@ -94,7 +94,7 @@ there is a esc4 to esc1
 >![alt text](../images/2025-02-22-[HTB]-EscapeTwo/image-1.png)
 >![alt text](../images/2025-02-22-[HTB]-EscapeTwo/image-2.png)
 
->get certificate
+> get certificate
 >![alt text](../images/2025-02-22-[HTB]-EscapeTwo/image-3.png)
 
 
