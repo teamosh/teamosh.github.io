@@ -80,4 +80,25 @@ Ryan, got yo ass:
 
 Now connect through evil-winrm or other of ur choice and get user flag:
 
-To do: root.txt
+
+---
+
+root.txt
+
+
+>![alt text](../images/2025-02-22-[HTB]-EscapeTwo/image.png)
+
+there is a esc4 to esc1
+
+> now give rights, shadow creds and do targeted kerberoasting
+>![alt text](../images/2025-02-22-[HTB]-EscapeTwo/image-1.png)
+>![alt text](../images/2025-02-22-[HTB]-EscapeTwo/image-2.png)
+
+>get certificate
+>![alt text](../images/2025-02-22-[HTB]-EscapeTwo/image-3.png)
+
+
+>then hash
+>![alt text](../images/2025-02-22-[HTB]-EscapeTwo/image-4.png)
+
+Now just connect and get your root.txt
