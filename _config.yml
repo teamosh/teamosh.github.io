@@ -1,0 +1,33 @@
+title: "teamosh's shelter"
+author: "teamosh"
+description: "the <b style=\"color: #000000;\">fears</b> we don't face become our <b style=\"color: #89CFF0;\">limits</b>"
+permalink: /:title/1
+lang: "en"
+excerpt_separator: "\n\n\n"
+date_format: "%B %d, %Y"
+
+# Layout
+
+show_excerpts: false        # show article excerpts on the home page
+show_frame: true           # adds a gray frame to the site
+show_sidebar: false        # show a sidebar instead of the usual header
+minimal: true             # use a dark header
+
+# Menu
+
+navigation:                # accepts {file, title, url, icon, sidebaricon}
+  - {url: "https://github.com/LindomarB/Projeto-Goggins-/blob/master/Can_t-Hurt-Me-David-Goggins.pdf", title: "credo"}
+  - {title: "Posts", file: "posts.md"}
+
+external:                  # shows a footer with social links - for available icons see fontawesome.com/icons
+  - {title: Github, icon: github, url: "https://github.com/teamosh"}
+  - {title: Telegram, icon: telegram, url: "http://t.me/teamosh"}
+
+comments:
+#  disqus_shortname: ""    # see https://disqus.com/
+#  isso_domain: ""         # see https://posativ.org/isso/
+
+plugins:
+ - jekyll-feed
+
+future: true

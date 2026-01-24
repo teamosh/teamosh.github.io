@@ -1,0 +1,35 @@
+---
+---
+
+@import index, font, basic, layout, classes
+
+html
+  background: lighten($dark, 70%)
+  padding: 0 calc(38% - 22em)
+
+body
+  box-shadow: 0 0 .3em lighten($dark, 65%)
+
+body > header, body > footer
+  background: lighten($dark, 5%)
+  color: $light
+
+// Add a background image to the header
+body > header
+  background-image: url('/assets/images/header.gif') // Adjust path if needed
+  background-size: cover
+  background-position: center
+  height: 75px // Adjust height as needed
+  padding: 0 25%
+
+@media (min-width: 32em)
+  body > header, body > article, body > footer
+    padding: 1.75em calc(22% - 6em)
+
+@media (prefers-color-scheme: dark)
+  html
+    background: darken($dark, 4%)
+  body > header, body > footer
+    background: $dark
+  body, body > header, body > footer
+    box-shadow: 0 0 0 1px lighten($dark, 8%)

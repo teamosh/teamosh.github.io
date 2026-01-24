@@ -1,0 +1,4 @@
+# Che smotrish? Only .enc files here.
+*
+!.gitignore
+!*.enc
