@@ -1,5 +1,5 @@
 ---
-title: "[Protected] Start Here"
+title: "[pwn.college] Start Here"
 layout: pdf
 password_protected: true
 protected_pdf: Start-Here.pdf
