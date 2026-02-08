@@ -32,21 +32,29 @@ layout: default
       var frame = document.getElementById('html-writeup-frame');
       frame.srcdoc = htmlString;
 
-      // Auto-resize: match iframe height to content
+      // Auto-resize: match iframe height to actual content
       frame.onload = function() {
         try {
           var doc = frame.contentDocument || frame.contentWindow.document;
+          // Override height:100% that Obsidian sets on html/body,
+          // otherwise scrollHeight just returns the iframe viewport height
+          var fix = doc.createElement('style');
+          fix.textContent = 'html, body { height: auto !important; overflow: visible !important; }';
+          doc.head.appendChild(fix);
+
           var resize = function() {
-            frame.style.height = doc.documentElement.scrollHeight + 'px';
+            // Temporarily shrink so content can report natural height
+            frame.style.height = '0px';
+            var h = doc.documentElement.scrollHeight;
+            frame.style.height = h + 'px';
           };
           resize();
           // Re-check after images/fonts load
           var observer = new MutationObserver(resize);
           observer.observe(doc.body, { childList: true, subtree: true, attributes: true });
           frame.contentWindow.addEventListener('resize', resize);
-          // Final resize after everything settles
-          setTimeout(resize, 1000);
-          setTimeout(resize, 3000);
+          setTimeout(resize, 500);
+          setTimeout(resize, 2000);
         } catch(e) {
           frame.style.height = '85vh';
           frame.scrolling = 'auto';
@@ -89,15 +97,21 @@ layout: default
       frame.onload = function() {
         try {
           var doc = frame.contentDocument || frame.contentWindow.document;
+          var fix = doc.createElement('style');
+          fix.textContent = 'html, body { height: auto !important; overflow: visible !important; }';
+          doc.head.appendChild(fix);
+
           var resize = function() {
-            frame.style.height = doc.documentElement.scrollHeight + 'px';
+            frame.style.height = '0px';
+            var h = doc.documentElement.scrollHeight;
+            frame.style.height = h + 'px';
           };
           resize();
           var observer = new MutationObserver(resize);
           observer.observe(doc.body, { childList: true, subtree: true, attributes: true });
           frame.contentWindow.addEventListener('resize', resize);
-          setTimeout(resize, 1000);
-          setTimeout(resize, 3000);
+          setTimeout(resize, 500);
+          setTimeout(resize, 2000);
         } catch(e) {
           frame.style.height = '85vh';
           frame.scrolling = 'auto';
