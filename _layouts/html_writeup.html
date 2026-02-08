@@ -7,10 +7,35 @@ layout: default
   {{ content }}
 
   {% if page.html_body %}
-  {{ page.html_styles }}
-  <div class="obsidian-writeup {{ page.html_body_classes }}">
-    {{ page.html_body }}
-  </div>
+  <!-- Content stored in template to prevent Obsidian styles from affecting the blog -->
+  <template id="writeup-src">{{ page.html_styles }}
+<div class="{{ page.html_body_classes }}">{{ page.html_body }}</div></template>
+
+  <iframe id="writeup-frame"
+    style="width:100%; border:none; display:block; min-height:300px; overflow:hidden; background:transparent;"
+    scrolling="no"
+    frameborder="0">
+  </iframe>
+
+  <script>
+  (function() {
+    var content = document.getElementById('writeup-src').innerHTML;
+    var doc = '<!DOCTYPE html><html><head><meta charset="utf-8">' +
+      '<style>html,body{margin:0;padding:0;overflow:visible!important;height:auto!important;}</style>' +
+      '</head><body>' + content + '</body></html>';
+
+    var frame = document.getElementById('writeup-frame');
+    frame.srcdoc = doc;
+
+    frame.onload = function() {
+      try {
+        var h = frame.contentDocument.documentElement.scrollHeight;
+        if (h > 100) frame.style.height = h + 'px';
+      } catch(e) {}
+    };
+  })();
+  </script>
+
   {% if page.html_file %}
   <div class="html-toolbar">
     <a href="{{ page.html_file | relative_url }}" class="html-download-btn" download>
@@ -18,7 +43,7 @@ layout: default
       Download
     </a>
     <a href="{{ page.html_file | relative_url }}" class="html-open-btn" target="_blank">
-      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
       Open in New Tab
     </a>
   </div>
@@ -26,6 +51,12 @@ layout: default
   {% endif %}
 
   <style>
+    #writeup-frame {
+      width: 100%;
+      border: none;
+      display: block;
+      overflow: hidden;
+    }
     .html-toolbar {
       display: flex;
       gap: 10px;

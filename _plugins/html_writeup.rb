@@ -6,22 +6,9 @@ require 'base64'
 
 module Jekyll
   module HtmlWriteupHelper
-    # Scope CSS so it only affects .obsidian-writeup container
-    def self.scope_css(styles_html)
-      # Extract CSS content from <style> tags
-      styles_html.gsub(/<style[^>]*>(.*?)<\/style>/m) do
-        css = $1
-        # Replace body/html selectors with .obsidian-writeup
-        css = css.gsub(/\bhtml\b/, '.obsidian-writeup')
-        css = css.gsub(/\bbody\b/, '.obsidian-writeup')
-        "<style>#{css}</style>"
-      end
-    end
-
     def self.extract_html(html_content)
-      # Extract all <style> tags from the document and scope them
-      raw_styles = html_content.scan(/<style[^>]*>.*?<\/style>/m).join("\n")
-      styles = scope_css(raw_styles)
+      # Extract all <style> tags from the document as-is
+      styles = html_content.scan(/<style[^>]*>.*?<\/style>/m).join("\n")
 
       # Extract body inner content
       body_match = html_content.match(/<body[^>]*>(.*)<\/body>/m)
