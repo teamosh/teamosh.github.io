@@ -19,22 +19,32 @@ layout: default
       </button>
     </div>
     <div class="pdf-viewer">
-      <iframe id="protected-pdf-frame" src="{{ page.pdf_data_uri }}" width="100%" height="100%">
+      <iframe id="protected-pdf-frame" width="100%" height="100%">
         <p>Your browser doesn't support embedded PDFs.</p>
       </iframe>
     </div>
   </div>
   <script>
     var pdfDataUri = "{{ page.pdf_data_uri }}";
+    function dataUriToBlob(dataUri) {
+      var parts = dataUri.split(',');
+      var mime = parts[0].match(/:(.*?);/)[1];
+      var raw = atob(parts[1]);
+      var arr = new Uint8Array(raw.length);
+      for (var i = 0; i < raw.length; i++) arr[i] = raw.charCodeAt(i);
+      return new Blob([arr], { type: mime });
+    }
+    var pdfBlob = dataUriToBlob(pdfDataUri);
+    var pdfBlobUrl = URL.createObjectURL(pdfBlob);
+    document.getElementById('protected-pdf-frame').src = pdfBlobUrl;
     function downloadProtectedPdf() {
       var link = document.createElement('a');
-      link.href = pdfDataUri;
+      link.href = pdfBlobUrl;
       link.download = '{{ page.protected_pdf | default: "document.pdf" }}';
       link.click();
     }
     function openProtectedPdfNewTab() {
-      var win = window.open();
-      win.document.write('<iframe src="' + pdfDataUri + '" style="width:100%;height:100%;border:none;"></iframe>');
+      window.open(pdfBlobUrl, '_blank');
     }
   </script>
   {% elsif page.pdf %}
