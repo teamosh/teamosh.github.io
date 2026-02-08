@@ -6,7 +6,7 @@ layout: default
   {% include meta.html post=page %}
   {{ content }}
   {% if page.html_data_uri %}
-  <!-- Protected HTML: base64 decoded and injected into Shadow DOM -->
+  <!-- Protected HTML: base64 decoded, rendered via srcdoc iframe -->
   <div class="html-container">
     <div class="html-toolbar">
       <button id="html-download-btn" class="html-download-btn">
@@ -18,7 +18,7 @@ layout: default
         Open in New Tab
       </button>
     </div>
-    <div id="html-writeup-host"></div>
+    <iframe id="html-writeup-frame" class="html-writeup-frame" frameborder="0" scrolling="no"></iframe>
   </div>
   <script>
     (function() {
@@ -29,32 +29,31 @@ layout: default
       for (var i = 0; i < raw.length; i++) bytes[i] = raw.charCodeAt(i);
       var htmlString = new TextDecoder().decode(bytes);
 
-      // Inject into Shadow DOM (style isolation)
-      var host = document.getElementById('html-writeup-host');
-      var shadow = host.attachShadow({ mode: 'open' });
-      var parser = new DOMParser();
-      var doc = parser.parseFromString(htmlString, 'text/html');
+      var frame = document.getElementById('html-writeup-frame');
+      frame.srcdoc = htmlString;
 
-      // Move all <style> and <link rel="stylesheet"> from head and body
-      doc.querySelectorAll('style, link[rel="stylesheet"]').forEach(function(el) {
-        shadow.appendChild(el.cloneNode(true));
-      });
-      // Wrap body content in a div (can't append <body> to shadow DOM)
-      var wrapper = document.createElement('div');
-      wrapper.className = doc.body.className;
-      wrapper.setAttribute('style', doc.body.getAttribute('style') || '');
-      wrapper.innerHTML = doc.body.innerHTML;
-      shadow.appendChild(wrapper);
+      // Auto-resize: match iframe height to content
+      frame.onload = function() {
+        try {
+          var doc = frame.contentDocument || frame.contentWindow.document;
+          var resize = function() {
+            frame.style.height = doc.documentElement.scrollHeight + 'px';
+          };
+          resize();
+          // Re-check after images/fonts load
+          var observer = new MutationObserver(resize);
+          observer.observe(doc.body, { childList: true, subtree: true, attributes: true });
+          frame.contentWindow.addEventListener('resize', resize);
+          // Final resize after everything settles
+          setTimeout(resize, 1000);
+          setTimeout(resize, 3000);
+        } catch(e) {
+          frame.style.height = '85vh';
+          frame.scrolling = 'auto';
+        }
+      };
 
-      // Rewrite CSS rules targeting body/html to target the wrapper instead
-      shadow.querySelectorAll('style').forEach(function(styleEl) {
-        styleEl.textContent = styleEl.textContent
-          .replace(/\bbody\b/g, '.writeup-body')
-          .replace(/\bhtml\b/g, ':host');
-      });
-      wrapper.classList.add('writeup-body');
-
-      // Build blob for download/open-in-new-tab
+      // Blob for download/open-in-new-tab
       var blob = new Blob([bytes], { type: 'text/html' });
       var blobUrl = URL.createObjectURL(blob);
 
@@ -70,7 +69,7 @@ layout: default
     })();
   </script>
   {% elsif page.html_file %}
-  <!-- Regular HTML: fetched and injected into Shadow DOM -->
+  <!-- Regular HTML: loaded via src, auto-resized -->
   <div class="html-container">
     <div class="html-toolbar">
       <a href="{{ page.html_file | relative_url }}" class="html-download-btn" download>
@@ -82,34 +81,28 @@ layout: default
         Open in New Tab
       </a>
     </div>
-    <div id="html-writeup-host"></div>
+    <iframe id="html-writeup-frame" class="html-writeup-frame" src="{{ page.html_file | relative_url }}" frameborder="0" scrolling="no"></iframe>
   </div>
   <script>
     (function() {
-      fetch('{{ page.html_file | relative_url }}')
-        .then(function(r) { return r.text(); })
-        .then(function(htmlString) {
-          var host = document.getElementById('html-writeup-host');
-          var shadow = host.attachShadow({ mode: 'open' });
-          var parser = new DOMParser();
-          var doc = parser.parseFromString(htmlString, 'text/html');
-
-          doc.querySelectorAll('style, link[rel="stylesheet"]').forEach(function(el) {
-            shadow.appendChild(el.cloneNode(true));
-          });
-          var wrapper = document.createElement('div');
-          wrapper.className = doc.body.className;
-          wrapper.setAttribute('style', doc.body.getAttribute('style') || '');
-          wrapper.innerHTML = doc.body.innerHTML;
-          shadow.appendChild(wrapper);
-
-          shadow.querySelectorAll('style').forEach(function(styleEl) {
-            styleEl.textContent = styleEl.textContent
-              .replace(/\bbody\b/g, '.writeup-body')
-              .replace(/\bhtml\b/g, ':host');
-          });
-          wrapper.classList.add('writeup-body');
-        });
+      var frame = document.getElementById('html-writeup-frame');
+      frame.onload = function() {
+        try {
+          var doc = frame.contentDocument || frame.contentWindow.document;
+          var resize = function() {
+            frame.style.height = doc.documentElement.scrollHeight + 'px';
+          };
+          resize();
+          var observer = new MutationObserver(resize);
+          observer.observe(doc.body, { childList: true, subtree: true, attributes: true });
+          frame.contentWindow.addEventListener('resize', resize);
+          setTimeout(resize, 1000);
+          setTimeout(resize, 3000);
+        } catch(e) {
+          frame.style.height = '85vh';
+          frame.scrolling = 'auto';
+        }
+      };
     })();
   </script>
   {% endif %}
@@ -160,16 +153,15 @@ layout: default
       background: rgba(255, 255, 255, 0.2);
       transform: translateY(-1px);
     }
-    #html-writeup-host {
-      padding: 2em;
-      background: #fff;
+    .html-writeup-frame {
+      width: 100%;
+      border: none;
+      display: block;
+      min-height: 600px;
     }
     @media (max-width: 600px) {
       .html-toolbar {
         flex-direction: column;
-      }
-      #html-writeup-host {
-        padding: 1em;
       }
     }
   </style>
