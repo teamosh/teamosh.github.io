@@ -6,7 +6,7 @@ layout: default
   {% include meta.html post=page %}
   {{ content }}
   {% if page.html_data_uri %}
-  <!-- Protected HTML: base64 decoded, rendered via srcdoc iframe -->
+  <!-- Protected HTML: base64 decoded, rendered in auto-resizing iframe -->
   <div class="html-container">
     <div class="html-toolbar">
       <button id="html-download-btn" class="html-download-btn">
@@ -18,7 +18,7 @@ layout: default
         Open in New Tab
       </button>
     </div>
-    <iframe id="html-writeup-frame" class="html-writeup-frame" frameborder="0" scrolling="no"></iframe>
+    <iframe id="html-writeup-frame" class="html-writeup-frame"></iframe>
   </div>
   <script>
     (function() {
@@ -28,42 +28,34 @@ layout: default
       var bytes = new Uint8Array(raw.length);
       for (var i = 0; i < raw.length; i++) bytes[i] = raw.charCodeAt(i);
       var htmlString = new TextDecoder().decode(bytes);
+      var blob = new Blob([bytes], { type: 'text/html' });
+      var blobUrl = URL.createObjectURL(blob);
 
       var frame = document.getElementById('html-writeup-frame');
-      frame.srcdoc = htmlString;
+      frame.src = blobUrl;
 
-      // Auto-resize: match iframe height to actual content
       frame.onload = function() {
         try {
           var doc = frame.contentDocument || frame.contentWindow.document;
-          // Override height:100% that Obsidian sets on html/body,
-          // otherwise scrollHeight just returns the iframe viewport height
+          // Override Obsidian's height:100% so scrollHeight reports real content size
           var fix = doc.createElement('style');
           fix.textContent = 'html, body { height: auto !important; overflow: visible !important; }';
           doc.head.appendChild(fix);
 
           var resize = function() {
-            // Temporarily shrink so content can report natural height
-            frame.style.height = '0px';
             var h = doc.documentElement.scrollHeight;
-            frame.style.height = h + 'px';
+            if (h > 100) frame.style.height = h + 'px';
           };
-          resize();
-          // Re-check after images/fonts load
-          var observer = new MutationObserver(resize);
-          observer.observe(doc.body, { childList: true, subtree: true, attributes: true });
-          frame.contentWindow.addEventListener('resize', resize);
+          // Give content time to reflow after style override
+          setTimeout(resize, 100);
           setTimeout(resize, 500);
           setTimeout(resize, 2000);
+          setTimeout(resize, 5000);
         } catch(e) {
+          // Cross-origin fallback (shouldn't happen with blob URLs)
           frame.style.height = '85vh';
-          frame.scrolling = 'auto';
         }
       };
-
-      // Blob for download/open-in-new-tab
-      var blob = new Blob([bytes], { type: 'text/html' });
-      var blobUrl = URL.createObjectURL(blob);
 
       document.getElementById('html-download-btn').addEventListener('click', function() {
         var a = document.createElement('a');
@@ -77,7 +69,7 @@ layout: default
     })();
   </script>
   {% elsif page.html_file %}
-  <!-- Regular HTML: loaded via src, auto-resized -->
+  <!-- Regular HTML: loaded in auto-resizing iframe -->
   <div class="html-container">
     <div class="html-toolbar">
       <a href="{{ page.html_file | relative_url }}" class="html-download-btn" download>
@@ -89,7 +81,7 @@ layout: default
         Open in New Tab
       </a>
     </div>
-    <iframe id="html-writeup-frame" class="html-writeup-frame" src="{{ page.html_file | relative_url }}" frameborder="0" scrolling="no"></iframe>
+    <iframe id="html-writeup-frame" class="html-writeup-frame" src="{{ page.html_file | relative_url }}"></iframe>
   </div>
   <script>
     (function() {
@@ -102,19 +94,15 @@ layout: default
           doc.head.appendChild(fix);
 
           var resize = function() {
-            frame.style.height = '0px';
             var h = doc.documentElement.scrollHeight;
-            frame.style.height = h + 'px';
+            if (h > 100) frame.style.height = h + 'px';
           };
-          resize();
-          var observer = new MutationObserver(resize);
-          observer.observe(doc.body, { childList: true, subtree: true, attributes: true });
-          frame.contentWindow.addEventListener('resize', resize);
+          setTimeout(resize, 100);
           setTimeout(resize, 500);
           setTimeout(resize, 2000);
+          setTimeout(resize, 5000);
         } catch(e) {
           frame.style.height = '85vh';
-          frame.scrolling = 'auto';
         }
       };
     })();
@@ -171,7 +159,8 @@ layout: default
       width: 100%;
       border: none;
       display: block;
-      min-height: 600px;
+      height: 20000px;
+      overflow: hidden;
     }
     @media (max-width: 600px) {
       .html-toolbar {
