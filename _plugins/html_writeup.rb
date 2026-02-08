@@ -54,14 +54,9 @@ module Jekyll
           html_content = File.read(html_path, encoding: 'UTF-8')
           extracted = HtmlWriteupHelper.extract_html(html_content)
 
-          # Also keep the full file as base64 for download button
-          raw_bytes = File.binread(html_path)
-          base64_data = Base64.strict_encode64(raw_bytes)
-
           post.data['html_styles'] = extracted[:styles]
           post.data['html_body'] = extracted[:body]
           post.data['html_body_classes'] = extracted[:body_classes]
-          post.data['html_data_uri'] = "data:text/html;base64,#{base64_data}"
 
           Jekyll.logger.info "Protected HTML:", "Extracted #{html_filename} (#{html_content.length} bytes, body: #{extracted[:body].length} bytes) in #{post.data['title']}"
         else

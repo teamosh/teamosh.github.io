@@ -11,38 +11,7 @@ layout: default
   <div class="obsidian-writeup {{ page.html_body_classes }}">
     {{ page.html_body }}
   </div>
-  {% if page.html_data_uri %}
-  <div class="html-toolbar">
-    <button id="html-download-btn" class="html-download-btn">
-      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-      Download
-    </button>
-    <button id="html-open-btn" class="html-open-btn">
-      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
-      Open in New Tab
-    </button>
-  </div>
-  <script>
-    (function() {
-      var dataUri = "{{ page.html_data_uri }}";
-      var parts = dataUri.split(',');
-      var raw = atob(parts[1]);
-      var bytes = new Uint8Array(raw.length);
-      for (var i = 0; i < raw.length; i++) bytes[i] = raw.charCodeAt(i);
-      var blob = new Blob([bytes], { type: 'text/html' });
-      var blobUrl = URL.createObjectURL(blob);
-      document.getElementById('html-download-btn').addEventListener('click', function() {
-        var a = document.createElement('a');
-        a.href = blobUrl;
-        a.download = '{{ page.protected_html | default: "writeup.html" }}';
-        a.click();
-      });
-      document.getElementById('html-open-btn').addEventListener('click', function() {
-        window.open(blobUrl, '_blank');
-      });
-    })();
-  </script>
-  {% elsif page.html_file %}
+  {% if page.html_file %}
   <div class="html-toolbar">
     <a href="{{ page.html_file | relative_url }}" class="html-download-btn" download>
       <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
