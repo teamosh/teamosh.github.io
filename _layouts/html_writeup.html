@@ -35,12 +35,24 @@ layout: default
       var parser = new DOMParser();
       var doc = parser.parseFromString(htmlString, 'text/html');
 
-      // Move all <style> and <link rel="stylesheet"> from head
+      // Move all <style> and <link rel="stylesheet"> from head and body
       doc.querySelectorAll('style, link[rel="stylesheet"]').forEach(function(el) {
         shadow.appendChild(el.cloneNode(true));
       });
-      // Move body content
-      shadow.appendChild(doc.body.cloneNode(true));
+      // Wrap body content in a div (can't append <body> to shadow DOM)
+      var wrapper = document.createElement('div');
+      wrapper.className = doc.body.className;
+      wrapper.setAttribute('style', doc.body.getAttribute('style') || '');
+      wrapper.innerHTML = doc.body.innerHTML;
+      shadow.appendChild(wrapper);
+
+      // Rewrite CSS rules targeting body/html to target the wrapper instead
+      shadow.querySelectorAll('style').forEach(function(styleEl) {
+        styleEl.textContent = styleEl.textContent
+          .replace(/\bbody\b/g, '.writeup-body')
+          .replace(/\bhtml\b/g, ':host');
+      });
+      wrapper.classList.add('writeup-body');
 
       // Build blob for download/open-in-new-tab
       var blob = new Blob([bytes], { type: 'text/html' });
@@ -85,7 +97,18 @@ layout: default
           doc.querySelectorAll('style, link[rel="stylesheet"]').forEach(function(el) {
             shadow.appendChild(el.cloneNode(true));
           });
-          shadow.appendChild(doc.body.cloneNode(true));
+          var wrapper = document.createElement('div');
+          wrapper.className = doc.body.className;
+          wrapper.setAttribute('style', doc.body.getAttribute('style') || '');
+          wrapper.innerHTML = doc.body.innerHTML;
+          shadow.appendChild(wrapper);
+
+          shadow.querySelectorAll('style').forEach(function(styleEl) {
+            styleEl.textContent = styleEl.textContent
+              .replace(/\bbody\b/g, '.writeup-body')
+              .replace(/\bhtml\b/g, ':host');
+          });
+          wrapper.classList.add('writeup-body');
         });
     })();
   </script>
