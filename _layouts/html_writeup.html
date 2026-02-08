@@ -6,58 +6,59 @@ layout: default
   {% include meta.html post=page %}
   {{ content }}
   {% if page.html_data_uri %}
-  <!-- Protected HTML: embedded as base64, rendered via blob URL in iframe -->
+  <!-- Protected HTML: base64 decoded and injected into Shadow DOM -->
   <div class="html-container">
     <div class="html-toolbar">
-      <button onclick="downloadProtectedHtml()" class="html-download-btn">
+      <button id="html-download-btn" class="html-download-btn">
         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
         Download HTML
       </button>
-      <button onclick="openProtectedHtmlNewTab()" class="html-open-btn">
+      <button id="html-open-btn" class="html-open-btn">
         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
         Open in New Tab
       </button>
     </div>
-    <div class="html-viewer">
-      <iframe id="html-writeup-frame" width="100%" scrolling="no">
-        <p>Your browser doesn't support iframes.</p>
-      </iframe>
-    </div>
+    <div id="html-writeup-host"></div>
   </div>
   <script>
-    var htmlDataUri = "{{ page.html_data_uri }}";
-    function dataUriToBlob(dataUri) {
+    (function() {
+      var dataUri = "{{ page.html_data_uri }}";
       var parts = dataUri.split(',');
-      var mime = parts[0].match(/:(.*?);/)[1];
       var raw = atob(parts[1]);
-      var arr = new Uint8Array(raw.length);
-      for (var i = 0; i < raw.length; i++) arr[i] = raw.charCodeAt(i);
-      return new Blob([arr], { type: mime });
-    }
-    var htmlBlob = dataUriToBlob(htmlDataUri);
-    var htmlBlobUrl = URL.createObjectURL(htmlBlob);
-    var frame = document.getElementById('html-writeup-frame');
-    frame.src = htmlBlobUrl;
-    frame.onload = function() {
-      try {
-        var doc = frame.contentDocument || frame.contentWindow.document;
-        frame.style.height = doc.documentElement.scrollHeight + 'px';
-      } catch(e) {
-        frame.style.height = '85vh';
-      }
-    };
-    function downloadProtectedHtml() {
-      var link = document.createElement('a');
-      link.href = htmlBlobUrl;
-      link.download = '{{ page.protected_html | default: "writeup.html" }}';
-      link.click();
-    }
-    function openProtectedHtmlNewTab() {
-      window.open(htmlBlobUrl, '_blank');
-    }
+      var bytes = new Uint8Array(raw.length);
+      for (var i = 0; i < raw.length; i++) bytes[i] = raw.charCodeAt(i);
+      var htmlString = new TextDecoder().decode(bytes);
+
+      // Inject into Shadow DOM (style isolation)
+      var host = document.getElementById('html-writeup-host');
+      var shadow = host.attachShadow({ mode: 'open' });
+      var parser = new DOMParser();
+      var doc = parser.parseFromString(htmlString, 'text/html');
+
+      // Move all <style> and <link rel="stylesheet"> from head
+      doc.querySelectorAll('style, link[rel="stylesheet"]').forEach(function(el) {
+        shadow.appendChild(el.cloneNode(true));
+      });
+      // Move body content
+      shadow.appendChild(doc.body.cloneNode(true));
+
+      // Build blob for download/open-in-new-tab
+      var blob = new Blob([bytes], { type: 'text/html' });
+      var blobUrl = URL.createObjectURL(blob);
+
+      document.getElementById('html-download-btn').addEventListener('click', function() {
+        var a = document.createElement('a');
+        a.href = blobUrl;
+        a.download = '{{ page.protected_html | default: "writeup.html" }}';
+        a.click();
+      });
+      document.getElementById('html-open-btn').addEventListener('click', function() {
+        window.open(blobUrl, '_blank');
+      });
+    })();
   </script>
   {% elsif page.html_file %}
-  <!-- Regular HTML: linked from assets -->
+  <!-- Regular HTML: fetched and injected into Shadow DOM -->
   <div class="html-container">
     <div class="html-toolbar">
       <a href="{{ page.html_file | relative_url }}" class="html-download-btn" download>
@@ -69,22 +70,24 @@ layout: default
         Open in New Tab
       </a>
     </div>
-    <div class="html-viewer">
-      <iframe id="html-writeup-frame" src="{{ page.html_file | relative_url }}" width="100%" scrolling="no">
-        <p>Your browser doesn't support iframes. <a href="{{ page.html_file | relative_url }}">Open the writeup</a> instead.</p>
-      </iframe>
-    </div>
+    <div id="html-writeup-host"></div>
   </div>
   <script>
-    var frame = document.getElementById('html-writeup-frame');
-    frame.onload = function() {
-      try {
-        var doc = frame.contentDocument || frame.contentWindow.document;
-        frame.style.height = doc.documentElement.scrollHeight + 'px';
-      } catch(e) {
-        frame.style.height = '85vh';
-      }
-    };
+    (function() {
+      fetch('{{ page.html_file | relative_url }}')
+        .then(function(r) { return r.text(); })
+        .then(function(htmlString) {
+          var host = document.getElementById('html-writeup-host');
+          var shadow = host.attachShadow({ mode: 'open' });
+          var parser = new DOMParser();
+          var doc = parser.parseFromString(htmlString, 'text/html');
+
+          doc.querySelectorAll('style, link[rel="stylesheet"]').forEach(function(el) {
+            shadow.appendChild(el.cloneNode(true));
+          });
+          shadow.appendChild(doc.body.cloneNode(true));
+        });
+    })();
   </script>
   {% endif %}
 
@@ -134,17 +137,16 @@ layout: default
       background: rgba(255, 255, 255, 0.2);
       transform: translateY(-1px);
     }
-    .html-viewer {
+    #html-writeup-host {
+      padding: 2em;
       background: #fff;
-    }
-    .html-viewer iframe {
-      border: none;
-      display: block;
-      min-height: 600px;
     }
     @media (max-width: 600px) {
       .html-toolbar {
         flex-direction: column;
+      }
+      #html-writeup-host {
+        padding: 1em;
       }
     }
   </style>
