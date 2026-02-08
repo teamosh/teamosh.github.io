@@ -1,0 +1,158 @@
+---
+layout: default
+---
+
+<article{% if page.password_protected %} data-protected="true" class="protected-post"{% endif %}>
+  {% include meta.html post=page %}
+  {{ content }}
+  {% if page.html_data_uri %}
+  <!-- Protected HTML: embedded as base64, rendered via blob URL in iframe -->
+  <div class="html-container">
+    <div class="html-toolbar">
+      <button onclick="downloadProtectedHtml()" class="html-download-btn">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        Download HTML
+      </button>
+      <button onclick="openProtectedHtmlNewTab()" class="html-open-btn">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+        Open in New Tab
+      </button>
+    </div>
+    <div class="html-viewer">
+      <iframe id="html-writeup-frame" width="100%" scrolling="no">
+        <p>Your browser doesn't support iframes.</p>
+      </iframe>
+    </div>
+  </div>
+  <script>
+    var htmlDataUri = "{{ page.html_data_uri }}";
+    function dataUriToBlob(dataUri) {
+      var parts = dataUri.split(',');
+      var mime = parts[0].match(/:(.*?);/)[1];
+      var raw = atob(parts[1]);
+      var arr = new Uint8Array(raw.length);
+      for (var i = 0; i < raw.length; i++) arr[i] = raw.charCodeAt(i);
+      return new Blob([arr], { type: mime });
+    }
+    var htmlBlob = dataUriToBlob(htmlDataUri);
+    var htmlBlobUrl = URL.createObjectURL(htmlBlob);
+    var frame = document.getElementById('html-writeup-frame');
+    frame.src = htmlBlobUrl;
+    frame.onload = function() {
+      try {
+        var doc = frame.contentDocument || frame.contentWindow.document;
+        frame.style.height = doc.documentElement.scrollHeight + 'px';
+      } catch(e) {
+        frame.style.height = '85vh';
+      }
+    };
+    function downloadProtectedHtml() {
+      var link = document.createElement('a');
+      link.href = htmlBlobUrl;
+      link.download = '{{ page.protected_html | default: "writeup.html" }}';
+      link.click();
+    }
+    function openProtectedHtmlNewTab() {
+      window.open(htmlBlobUrl, '_blank');
+    }
+  </script>
+  {% elsif page.html_file %}
+  <!-- Regular HTML: linked from assets -->
+  <div class="html-container">
+    <div class="html-toolbar">
+      <a href="{{ page.html_file | relative_url }}" class="html-download-btn" download>
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        Download HTML
+      </a>
+      <a href="{{ page.html_file | relative_url }}" class="html-open-btn" target="_blank">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+        Open in New Tab
+      </a>
+    </div>
+    <div class="html-viewer">
+      <iframe id="html-writeup-frame" src="{{ page.html_file | relative_url }}" width="100%" scrolling="no">
+        <p>Your browser doesn't support iframes. <a href="{{ page.html_file | relative_url }}">Open the writeup</a> instead.</p>
+      </iframe>
+    </div>
+  </div>
+  <script>
+    var frame = document.getElementById('html-writeup-frame');
+    frame.onload = function() {
+      try {
+        var doc = frame.contentDocument || frame.contentWindow.document;
+        frame.style.height = doc.documentElement.scrollHeight + 'px';
+      } catch(e) {
+        frame.style.height = '85vh';
+      }
+    };
+  </script>
+  {% endif %}
+
+  {% if page.html_data_uri or page.html_file %}
+  <style>
+    .html-container {
+      margin-top: 1.5em;
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+    }
+    .html-toolbar {
+      display: flex;
+      gap: 10px;
+      padding: 12px 16px;
+      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    .html-download-btn, .html-open-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 16px;
+      border-radius: 6px;
+      font-size: 14px;
+      font-weight: 500;
+      text-decoration: none;
+      transition: all 0.2s ease;
+      cursor: pointer;
+      border: none;
+      font-family: inherit;
+    }
+    .html-download-btn {
+      background: #89CFF0;
+      color: #1a1a2e;
+    }
+    .html-download-btn:hover {
+      background: #a8dcf5;
+      transform: translateY(-1px);
+    }
+    .html-open-btn {
+      background: rgba(255, 255, 255, 0.1);
+      color: #fff;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+    .html-open-btn:hover {
+      background: rgba(255, 255, 255, 0.2);
+      transform: translateY(-1px);
+    }
+    .html-viewer {
+      background: #fff;
+    }
+    .html-viewer iframe {
+      border: none;
+      display: block;
+      min-height: 600px;
+    }
+    @media (max-width: 600px) {
+      .html-toolbar {
+        flex-direction: column;
+      }
+    }
+  </style>
+  {% endif %}
+  {% if page.comments != false and site.comments.isso or site.comments.disqus %}
+    <hr>
+    {% if site.comments.isso_domain %}<div id="isso-thread"></div>{% endif %}
+    {% if site.comments.disqus_shortname %}<div id="disqus_thread"></div>{% endif %}
+    <noscript>Please enable JavaScript to view comments.</noscript>
+  {% endif %}
+</article>
